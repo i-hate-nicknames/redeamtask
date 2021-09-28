@@ -12,11 +12,11 @@ type PostgresConfig struct {
 
 type BookRecord struct {
 	ID int // todo maybe uint
-	book.Book
+	*book.Book
 }
 
 type BookDB interface {
-	Create(*BookRecord) error
+	Create(*BookRecord) (*BookRecord, error)
 	Update(*BookRecord) error
 	Get(id int) (*BookRecord, error)
 	Close() error

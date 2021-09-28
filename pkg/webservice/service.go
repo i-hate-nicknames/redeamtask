@@ -2,12 +2,15 @@ package webservice
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	bookapi "github.com/i-hate-nicknames/redeamtask/pkg/api"
+	"github.com/i-hate-nicknames/redeamtask/pkg/book"
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
 )
 
@@ -37,9 +40,31 @@ func defineRoutes(ws *webservice, r *chi.Mux) {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Logger)
-	r.Route("/books/{id}", func(r chi.Router) {
-		r.Get("/", ws.GetBook)
+	r.Route("/books", func(r chi.Router) {
+		r.Get("/{id}", ws.GetBook)
+		r.Post("/", ws.CreateBook)
 	})
+}
+
+func (ws *webservice) CreateBook(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		log.Printf("Failed to read request: %s", err)
+		respondError(w, http.StatusInternalServerError, "backend error")
+	}
+	var b book.Book
+	err = json.Unmarshal(data, &b)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid book data format")
+	}
+	ID, err := ws.api.Create(&b)
+	if err != nil {
+		log.Println(err)
+		respondError(w, http.StatusInternalServerError, err.Error())
+	}
+	response := IdResponse{BookID: ID}
+	respondJson(w, http.StatusOK, response)
 }
 
 func (ws *webservice) GetBook(w http.ResponseWriter, r *http.Request) {

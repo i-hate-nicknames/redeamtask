@@ -7,7 +7,7 @@ import (
 
 type BookAPI interface {
 	Get(id int) (*book.Book, error)
-	Create(*book.Book) error
+	Create(*book.Book) (int, error)
 	Update(int, *book.Book) error
 }
 
@@ -27,10 +27,12 @@ func (api *api) Get(id int) (*book.Book, error) {
 	return recordToDomain(record), nil
 }
 
-// todo: think about design of create/update operations
-
-func (api *api) Create(book *book.Book) error {
-	return api.db.Create(domainToRecord(book))
+func (api *api) Create(book *book.Book) (int, error) {
+	dbBook, err := api.db.Create(domainToRecord(book))
+	if err != nil {
+		return 0, err
+	}
+	return dbBook.ID, nil
 }
 
 func (api *api) Update(bookID int, book *book.Book) error {
@@ -40,9 +42,18 @@ func (api *api) Update(bookID int, book *book.Book) error {
 }
 
 func recordToDomain(record *db.BookRecord) *book.Book {
-	panic("not implemented")
+	return &book.Book{
+		Title:       record.Title,
+		Publisher:   record.Publisher,
+		Author:      record.Author,
+		PublishDate: record.PublishDate,
+		Status:      record.Status,
+		Rating:      record.Rating,
+	}
 }
 
 func domainToRecord(book *book.Book) *db.BookRecord {
-	panic("not implemented")
+	return &db.BookRecord{
+		Book: book,
+	}
 }

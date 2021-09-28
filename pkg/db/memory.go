@@ -21,8 +21,16 @@ func (db *memoryDB) save(br *BookRecord) error {
 	return nil
 }
 
-func (db *memoryDB) Create(br *BookRecord) error {
-	return db.save(br)
+func (db *memoryDB) Create(br *BookRecord) (*BookRecord, error) {
+	db.mu.Lock()
+	br.ID = db.nextID
+	db.nextID++
+	db.mu.Unlock()
+	err := db.save(br)
+	if err != nil {
+		return nil, err
+	}
+	return br, nil
 }
 
 func (db *memoryDB) Update(br *BookRecord) error {
