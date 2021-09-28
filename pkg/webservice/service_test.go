@@ -3,6 +3,7 @@ package webservice
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,7 +32,7 @@ func TestInvalidPath(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code, w.Body.String())
 }
 
-func TestCreateBook(t *testing.T) {
+func TestCreateBookCorrectID(t *testing.T) {
 	service := newService()
 	w := httptest.NewRecorder()
 	b := book.Book{
@@ -44,12 +45,48 @@ func TestCreateBook(t *testing.T) {
 	}
 	payload, _ := json.Marshal(b)
 	body := bytes.NewBuffer(payload)
-	r := httptest.NewRequest(http.MethodPost, "/book", body)
+	r := httptest.NewRequest(http.MethodPost, "/books", body)
 
 	service.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
 
-	// todo: unmarshal response and test that it's valid
+	var resp IdResponse
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, resp.BookID)
+}
 
-	// todo: request the book back
+func TestCreateBookCorrectData(t *testing.T) {
+	service := newService()
+	w := httptest.NewRecorder()
+	b := book.Book{
+		Title:       "title",
+		Author:      "author",
+		Publisher:   "publisher",
+		PublishDate: time.Now(),
+		Rating:      1,
+		Status:      book.StatusCheckedOut,
+	}
+	payload, _ := json.Marshal(b)
+	body := bytes.NewBuffer(payload)
+	r := httptest.NewRequest(http.MethodPost, "/books", body)
+
+	service.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var resp IdResponse
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+
+	w = httptest.NewRecorder()
+	body = bytes.NewBuffer(make([]byte, 0))
+	path := fmt.Sprintf("/books/%d", resp.BookID)
+	r = httptest.NewRequest(http.MethodGet, path, body)
+	service.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var bookResp book.Book
+	err = json.Unmarshal(w.Body.Bytes(), &bookResp)
+	assert.NoError(t, err)
+	assert.Equal(t, b, bookResp)
 }

@@ -52,16 +52,24 @@ func (ws *webservice) CreateBook(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Failed to read request: %s", err)
 		respondError(w, http.StatusInternalServerError, "backend error")
+		return
 	}
 	var b book.Book
 	err = json.Unmarshal(data, &b)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid book data format")
+		return
+	}
+	err = b.Validate()
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	ID, err := ws.api.Create(&b)
 	if err != nil {
 		log.Println(err)
 		respondError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	response := IdResponse{BookID: ID}
 	respondJson(w, http.StatusOK, response)
