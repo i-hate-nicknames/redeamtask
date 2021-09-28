@@ -5,6 +5,7 @@ type PostgresConfig struct {
 }
 
 type BookRecord struct {
+	id            int // todo maybe uint
 	Title, Author string
 }
 
@@ -12,12 +13,4 @@ type BookDB interface {
 	Save(*BookRecord) error
 	Get(id int) (*BookRecord, error)
 	Close() error
-}
-
-type postgresDB struct {
-	// todo: postgres conn be here
-}
-
-func MakePostgresDB(conf PostgresConfig) BookDB {
-	panic("not implemented")
 }
