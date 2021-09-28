@@ -1,18 +1,23 @@
 package db
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/i-hate-nicknames/redeamtask/pkg/book"
+)
 
 type PostgresConfig struct {
 	DBName string
 }
 
 type BookRecord struct {
-	id            int // todo maybe uint
-	Title, Author string
+	ID int // todo maybe uint
+	book.Book
 }
 
 type BookDB interface {
-	Save(*BookRecord) error
+	Create(*BookRecord) error
+	Update(*BookRecord) error
 	Get(id int) (*BookRecord, error)
 	Close() error
 }

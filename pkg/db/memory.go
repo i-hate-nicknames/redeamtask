@@ -14,11 +14,22 @@ func MakeMemoryDB() BookDB {
 	return db
 }
 
-func (db *memoryDB) Save(br *BookRecord) error {
+func (db *memoryDB) save(br *BookRecord) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	db.items[br.id] = br
+	db.items[br.ID] = br
 	return nil
+}
+
+func (db *memoryDB) Create(br *BookRecord) error {
+	return db.save(br)
+}
+
+func (db *memoryDB) Update(br *BookRecord) error {
+	if _, err := db.Get(br.ID); err != nil {
+		return err
+	}
+	return db.save(br)
 }
 
 func (db *memoryDB) Get(id int) (*BookRecord, error) {
