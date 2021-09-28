@@ -1,13 +1,14 @@
 package api
 
-import "github.com/i-hate-nicknames/redeamtask/pkg/db"
+import (
+	"github.com/i-hate-nicknames/redeamtask/pkg/book"
+	"github.com/i-hate-nicknames/redeamtask/pkg/db"
+)
 
 type BookAPI interface {
-	Get() (*Book, error)
-	Store(*Book) error
+	Get() (*book.Book, error)
+	Store(*book.Book) error
 }
-
-type Book db.BookRecord
 
 type api struct {
 	db db.BookDB
@@ -17,10 +18,10 @@ func NewAPI(db db.BookDB) BookAPI {
 	return &api{db: db}
 }
 
-func (api *api) Get() (*Book, error) {
+func (api *api) Get() (*book.Book, error) {
 	panic("not implemented")
 }
 
-func (api *api) Store(*Book) error {
+func (api *api) Store(*book.Book) error {
 	panic("not implemented")
 }
