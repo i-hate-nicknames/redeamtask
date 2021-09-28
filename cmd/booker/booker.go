@@ -10,5 +10,5 @@ func main() {
 	bookDB := db.MakeMemoryDB()
 	API := api.NewAPI(bookDB)
 	service := webservice.MakeService(API)
-	service.Run(8080)
+	service.NewBook()
 }

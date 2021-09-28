@@ -1,9 +1,14 @@
 package webservice
 
-import bookapi "github.com/i-hate-nicknames/redeamtask/pkg/api"
+import (
+	"net/http"
+
+	bookapi "github.com/i-hate-nicknames/redeamtask/pkg/api"
+)
 
 type Service interface {
-	Run(port uint16) error
+	http.Handler
+	NewBook()
 }
 
 type webservice struct {
@@ -11,7 +16,7 @@ type webservice struct {
 }
 
 func MakeService(api bookapi.BookAPI) Service {
-	return &webservice{api: api}
+	panic("not implemented")
 }
 
 func (ws *webservice) Run(port uint16) error {
