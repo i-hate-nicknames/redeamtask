@@ -1,5 +1,7 @@
 package db
 
+import "errors"
+
 type PostgresConfig struct {
 	DBName string
 }
@@ -14,3 +16,5 @@ type BookDB interface {
 	Get(id int) (*BookRecord, error)
 	Close() error
 }
+
+var ErrBookNotFound = errors.New("book not found")
