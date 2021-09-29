@@ -12,11 +12,6 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: booker
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     ports:
       - 8035:5432
     networks:
@@ -32,6 +27,3 @@ services:
       - 8080:8080
     networks:
       - booker
-    depends_on:
-      db:
-        condition: service_healthy
