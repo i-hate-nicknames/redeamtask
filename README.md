@@ -8,6 +8,15 @@ A small CRUD application that manages books
 2. Run `docker-compose up -d`
 3. Hit `localhost:8085/book` endpoint with POST, GET, PUT and DELETE methods
 
+You can also run it locally with in-memory database. For this, set APP_PORT
+and DB environment variables and run as follows:
+
+```
+go build cmd/booker/booker.go
+DB=memory APP_PORT=8085 ./booker
+```
+
+
 Example of book payload for POST and PUT methods:
 
 ```
