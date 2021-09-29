@@ -32,10 +32,10 @@ func MakeService(api bookapi.BookAPI) http.Handler {
 }
 
 func defineRoutes(ws *webservice, r *chi.Mux) {
+	r.Use(middleware.Logger)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Logger)
 	r.Route("/book", func(r chi.Router) {
 		r.Post("/", ws.CreateBook)
 		r.Route("/{id}", func(r chi.Router) {
