@@ -10,5 +10,9 @@ RUN go build -v -o booker ./cmd/booker/booker.go
 
 FROM debian:stable-slim
 COPY --from=builder /go/src/booker /app/booker
-EXPOSE 8080
+# todo: consider switching to go:embed
+COPY --from=builder /go/src/booker/sql /app/booker/sql
+ARG PORT=8080
+ENV PORT=${PORT}
+EXPOSE ${PORT}
 CMD ["/app/booker"]

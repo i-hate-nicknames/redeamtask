@@ -9,11 +9,11 @@ services:
     container_name: booker_postgres
     restart: always
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: booker
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - 8035:5432
+      - ${POSTGRES_PORT}:5432
     networks:
       - booker
 
@@ -21,9 +21,11 @@ services:
     build:
       context: .
       dockerfile: app.dockerfile
+      args:
+        PORT: ${APP_PORT}
     container_name: booker_app
     restart: always
     ports:
-      - 8080:8080
+      - ${APP_PORT}:${APP_PORT}
     networks:
       - booker
