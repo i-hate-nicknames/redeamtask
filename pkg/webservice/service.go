@@ -91,7 +91,7 @@ func (ws *webservice) UpdateBook(w http.ResponseWriter, r *http.Request) {
 
 // readBookRequest reads book from the given request. In case of error returns
 // false and sends error to the client
-func readBookRequest(w http.ResponseWriter, r *http.Request) (*book.Book, bool) {
+func readBookRequest(w http.ResponseWriter, r *http.Request) (book.Book, bool) {
 	data, err := ioutil.ReadAll(r.Body)
 	defer func() {
 		err := r.Body.Close()
@@ -102,20 +102,20 @@ func readBookRequest(w http.ResponseWriter, r *http.Request) (*book.Book, bool) 
 	if err != nil {
 		log.Printf("Failed to read request: %s", err)
 		respondError(w, http.StatusInternalServerError, "backend error")
-		return nil, false
+		return book.Book{}, false
 	}
 	var b book.Book
 	err = json.Unmarshal(data, &b)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid book data format")
-		return nil, false
+		return book.Book{}, false
 	}
 	err = b.Validate()
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
-		return nil, false
+		return book.Book{}, false
 	}
-	return &b, true
+	return b, true
 }
 
 // GetBook handler looks up a book and sends it to the client

@@ -9,10 +9,10 @@ import (
 
 // BookAPI implements domain level of book store
 type BookAPI interface {
-	Get(context.Context, int) (*book.Book, error)
-	GetAll(context.Context) ([]*book.Book, error)
-	Create(context.Context, *book.Book) (int, error)
-	Update(context.Context, int, *book.Book) error
+	Get(context.Context, int) (book.Book, error)
+	GetAll(context.Context) ([]book.Book, error)
+	Create(context.Context, book.Book) (int, error)
+	Update(context.Context, int, book.Book) error
 	Delete(context.Context, int) error
 }
 
@@ -25,27 +25,27 @@ func NewAPI(db db.BookDB) BookAPI {
 	return &api{db: db}
 }
 
-func (api *api) Get(ctx context.Context, ID int) (*book.Book, error) {
+func (api *api) Get(ctx context.Context, ID int) (book.Book, error) {
 	record, err := api.db.Get(ctx, ID)
 	if err != nil {
-		return nil, err
+		return book.Book{}, err
 	}
 	return recordToDomain(record), nil
 }
 
-func (api *api) GetAll(ctx context.Context) ([]*book.Book, error) {
+func (api *api) GetAll(ctx context.Context) ([]book.Book, error) {
 	records, err := api.db.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var books []*book.Book
+	var books []book.Book
 	for _, record := range records {
 		books = append(books, recordToDomain(record))
 	}
 	return books, nil
 }
 
-func (api *api) Create(ctx context.Context, book *book.Book) (int, error) {
+func (api *api) Create(ctx context.Context, book book.Book) (int, error) {
 	dbBook, err := api.db.Create(ctx, domainToRecord(book))
 	if err != nil {
 		return 0, err
@@ -53,7 +53,7 @@ func (api *api) Create(ctx context.Context, book *book.Book) (int, error) {
 	return dbBook.ID, nil
 }
 
-func (api *api) Update(ctx context.Context, bookID int, book *book.Book) error {
+func (api *api) Update(ctx context.Context, bookID int, book book.Book) error {
 	record := domainToRecord(book)
 	record.ID = bookID
 	return api.db.Update(ctx, record)
@@ -63,8 +63,8 @@ func (api *api) Delete(ctx context.Context, bookID int) error {
 	return api.db.Delete(ctx, bookID)
 }
 
-func recordToDomain(record *db.BookRecord) *book.Book {
-	return &book.Book{
+func recordToDomain(record db.BookRecord) book.Book {
+	return book.Book{
 		Title:       record.Title,
 		Publisher:   record.Publisher,
 		Author:      record.Author,
@@ -74,8 +74,8 @@ func recordToDomain(record *db.BookRecord) *book.Book {
 	}
 }
 
-func domainToRecord(book *book.Book) *db.BookRecord {
-	return &db.BookRecord{
+func domainToRecord(book book.Book) db.BookRecord {
+	return db.BookRecord{
 		Book: book,
 	}
 }

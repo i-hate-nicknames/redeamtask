@@ -20,7 +20,7 @@ import (
 // create new service with given books, return service
 // and slice of book ids, where n-th element corresponds to
 // assigned book ID to the n-th book in the provided books slice
-func newService(books ...*db.BookRecord) (http.Handler, []int) {
+func newService(books ...db.BookRecord) (http.Handler, []int) {
 	memdb := db.MakeMemoryDB()
 	var ids []int
 	for _, book := range books {
@@ -111,7 +111,7 @@ func TestGetBook(t *testing.T) {
 		Rating:      1,
 		Status:      book.StatusCheckedOut,
 	}
-	br := &db.BookRecord{Book: &b}
+	br := db.BookRecord{Book: b}
 	service, ids := newService(br)
 
 	w := httptest.NewRecorder()
@@ -137,7 +137,7 @@ func TestDeleteBook(t *testing.T) {
 		Rating:      1,
 		Status:      book.StatusCheckedOut,
 	}
-	br := &db.BookRecord{Book: &b}
+	br := db.BookRecord{Book: b}
 	service, ids := newService(br)
 
 	w := httptest.NewRecorder()
@@ -162,7 +162,7 @@ func TestUpdateBook(t *testing.T) {
 		Rating:      1,
 		Status:      book.StatusCheckedOut,
 	}
-	br := &db.BookRecord{Book: &b}
+	br := db.BookRecord{Book: b}
 	service, ids := newService(br)
 
 	b2 := book.Book{

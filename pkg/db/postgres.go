@@ -37,7 +37,7 @@ func (db *postgresDB) Migrate(ctx context.Context) error {
 	return err
 }
 
-func (db *postgresDB) Create(ctx context.Context, br *BookRecord) (*BookRecord, error) {
+func (db *postgresDB) Create(ctx context.Context, br BookRecord) (BookRecord, error) {
 	query := `
 		INSERT INTO books (title, author, publisher, publish_date, rating, _status)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -46,13 +46,13 @@ func (db *postgresDB) Create(ctx context.Context, br *BookRecord) (*BookRecord, 
 	lastInsertedID := 0
 	err := db.conn.QueryRow(ctx, query, br.Title, br.Author, br.Publisher, br.PublishDate, br.Rating, br.Status).Scan(&lastInsertedID)
 	if err != nil {
-		return nil, err
+		return BookRecord{}, err
 	}
 	br.ID = lastInsertedID
 	return br, nil
 }
 
-func (db *postgresDB) Update(ctx context.Context, br *BookRecord) error {
+func (db *postgresDB) Update(ctx context.Context, br BookRecord) error {
 	query := `
 		UPDATE books
 		SET
@@ -75,7 +75,7 @@ func (db *postgresDB) Update(ctx context.Context, br *BookRecord) error {
 	return err
 }
 
-func (db *postgresDB) Get(ctx context.Context, ID int) (*BookRecord, error) {
+func (db *postgresDB) Get(ctx context.Context, ID int) (BookRecord, error) {
 	query := `
 		SELECT id, title, author, publisher, publish_date, rating, _status
 		FROM books
@@ -85,12 +85,12 @@ func (db *postgresDB) Get(ctx context.Context, ID int) (*BookRecord, error) {
 	row := db.conn.QueryRow(ctx, query, ID)
 	err := row.Scan(&br.ID, &br.Title, &br.Author, &br.Publisher, &br.PublishDate, &br.Rating, &br.Status)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrBookNotFound
+		return BookRecord{}, ErrBookNotFound
 	}
 	if err != nil {
-		return nil, err
+		return BookRecord{}, err
 	}
-	return &br, nil
+	return br, nil
 }
 
 func (db *postgresDB) Delete(ctx context.Context, ID int) error {
@@ -107,7 +107,7 @@ func (db *postgresDB) Delete(ctx context.Context, ID int) error {
 	return err
 }
 
-func (db *postgresDB) GetAll(_ context.Context) ([]*BookRecord, error) {
+func (db *postgresDB) GetAll(_ context.Context) ([]BookRecord, error) {
 	panic("not implemented")
 }
 
