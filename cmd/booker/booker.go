@@ -15,7 +15,7 @@ import (
 func main() {
 	ctx := context.Background()
 	bookDB := initDB(ctx)
-
+	fmt.Println("hui sasi")
 	defer func() {
 		err := bookDB.Close(context.Background())
 		if err != nil {
