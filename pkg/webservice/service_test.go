@@ -2,6 +2,7 @@ package webservice
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -23,7 +24,7 @@ func newService(books ...*db.BookRecord) (Service, []int) {
 	memdb := db.MakeMemoryDB()
 	var ids []int
 	for _, book := range books {
-		record, _ := memdb.Create(book) // nolint: errcheck
+		record, _ := memdb.Create(context.Background(), book) // nolint: errcheck
 		ids = append(ids, record.ID)
 	}
 	api := api.NewAPI(memdb)

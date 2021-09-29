@@ -55,7 +55,7 @@ func (ws *webservice) CreateBook(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	ID, err := ws.api.Create(b)
+	ID, err := ws.api.Create(r.Context(), b)
 	if err != nil {
 		log.Println(err)
 		respondError(w, http.StatusInternalServerError, err.Error())
@@ -76,7 +76,7 @@ func (ws *webservice) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "book id should be a positive integer")
 		return
 	}
-	err = ws.api.Update(ID, b)
+	err = ws.api.Update(r.Context(), ID, b)
 	if err == db.ErrBookNotFound {
 		respondError(w, http.StatusNotFound, "book not found")
 		return
@@ -117,7 +117,7 @@ func (ws *webservice) GetBook(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "book id should be a positive integer")
 		return
 	}
-	book, err := ws.api.Get(ID)
+	book, err := ws.api.Get(r.Context(), ID)
 	if err == db.ErrBookNotFound {
 		respondError(w, http.StatusNotFound, "book not found")
 		return
@@ -136,7 +136,7 @@ func (ws *webservice) DeleteBook(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "book id should be a positive integer")
 		return
 	}
-	err = ws.api.Delete(ID)
+	err = ws.api.Delete(r.Context(), ID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return

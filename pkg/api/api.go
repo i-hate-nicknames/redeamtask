@@ -1,15 +1,17 @@
 package api
 
 import (
+	"context"
+
 	"github.com/i-hate-nicknames/redeamtask/pkg/book"
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
 )
 
 type BookAPI interface {
-	Get(id int) (*book.Book, error)
-	Create(*book.Book) (int, error)
-	Update(int, *book.Book) error
-	Delete(int) error
+	Get(context.Context, int) (*book.Book, error)
+	Create(context.Context, *book.Book) (int, error)
+	Update(context.Context, int, *book.Book) error
+	Delete(context.Context, int) error
 }
 
 type api struct {
@@ -20,30 +22,30 @@ func NewAPI(db db.BookDB) BookAPI {
 	return &api{db: db}
 }
 
-func (api *api) Get(id int) (*book.Book, error) {
-	record, err := api.db.Get(id)
+func (api *api) Get(ctx context.Context, ID int) (*book.Book, error) {
+	record, err := api.db.Get(ctx, ID)
 	if err != nil {
 		return nil, err
 	}
 	return recordToDomain(record), nil
 }
 
-func (api *api) Create(book *book.Book) (int, error) {
-	dbBook, err := api.db.Create(domainToRecord(book))
+func (api *api) Create(ctx context.Context, book *book.Book) (int, error) {
+	dbBook, err := api.db.Create(ctx, domainToRecord(book))
 	if err != nil {
 		return 0, err
 	}
 	return dbBook.ID, nil
 }
 
-func (api *api) Update(bookID int, book *book.Book) error {
+func (api *api) Update(ctx context.Context, bookID int, book *book.Book) error {
 	record := domainToRecord(book)
 	record.ID = bookID
-	return api.db.Update(record)
+	return api.db.Update(ctx, record)
 }
 
-func (api *api) Delete(bookID int) error {
-	return api.db.Delete(bookID)
+func (api *api) Delete(ctx context.Context, bookID int) error {
+	return api.db.Delete(ctx, bookID)
 }
 
 func recordToDomain(record *db.BookRecord) *book.Book {

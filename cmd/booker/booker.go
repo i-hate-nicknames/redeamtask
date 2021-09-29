@@ -13,12 +13,13 @@ import (
 )
 
 func main() {
-	bookDB, err := db.MakePostgresDB(context.Background(), dsnFromEnv())
+	ctx := context.Background()
+	bookDB, err := db.MakePostgresDB(ctx, dsnFromEnv())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer bookDB.Close()
-	err = bookDB.Migrate()
+	defer bookDB.Close(context.Background())
+	err = bookDB.Migrate(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

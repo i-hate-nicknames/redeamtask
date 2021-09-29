@@ -1,6 +1,9 @@
 package db
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 type memoryDB struct {
 	nextID int
@@ -21,11 +24,11 @@ func (db *memoryDB) save(br *BookRecord) error {
 	return nil
 }
 
-func (db *memoryDB) Migrate() error {
+func (db *memoryDB) Migrate(_ context.Context) error {
 	return nil
 }
 
-func (db *memoryDB) Create(br *BookRecord) (*BookRecord, error) {
+func (db *memoryDB) Create(_ context.Context, br *BookRecord) (*BookRecord, error) {
 	db.mu.Lock()
 	br.ID = db.nextID
 	db.nextID++
@@ -37,30 +40,30 @@ func (db *memoryDB) Create(br *BookRecord) (*BookRecord, error) {
 	return br, nil
 }
 
-func (db *memoryDB) Update(br *BookRecord) error {
-	if _, err := db.Get(br.ID); err != nil {
+func (db *memoryDB) Update(ctx context.Context, br *BookRecord) error {
+	if _, err := db.Get(ctx, br.ID); err != nil {
 		return err
 	}
 	return db.save(br)
 }
 
-func (db *memoryDB) Get(id int) (*BookRecord, error) {
+func (db *memoryDB) Get(_ context.Context, ID int) (*BookRecord, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	b, ok := db.items[id]
+	b, ok := db.items[ID]
 	if !ok {
 		return nil, ErrBookNotFound
 	}
 	return b, nil
 }
 
-func (db *memoryDB) Delete(ID int) error {
+func (db *memoryDB) Delete(_ context.Context, ID int) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	delete(db.items, ID)
 	return nil
 }
 
-func (db *memoryDB) Close() error {
+func (db *memoryDB) Close(_ context.Context) error {
 	return nil
 }
