@@ -107,8 +107,26 @@ func (db *postgresDB) Delete(ctx context.Context, ID int) error {
 	return err
 }
 
-func (db *postgresDB) GetAll(_ context.Context) ([]BookRecord, error) {
-	panic("not implemented")
+func (db *postgresDB) GetAll(ctx context.Context) ([]BookRecord, error) {
+	query := `
+		SELECT id, title, author, publisher, publish_date, rating, _status
+		FROM books
+		WHERE deleted_at IS NULL
+	`
+	var brs []BookRecord
+	rows, err := db.conn.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var br BookRecord
+		err := rows.Scan(&br.ID, &br.Title, &br.Author, &br.Publisher, &br.PublishDate, &br.Rating, &br.Status)
+		if err != nil {
+			return nil, err
+		}
+		brs = append(brs, br)
+	}
+	return brs, nil
 }
 
 func (db *postgresDB) Close(ctx context.Context) error {
