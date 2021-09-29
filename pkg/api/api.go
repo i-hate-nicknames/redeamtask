@@ -7,6 +7,7 @@ import (
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
 )
 
+// BookAPI implements domain level of book store
 type BookAPI interface {
 	Get(context.Context, int) (*book.Book, error)
 	Create(context.Context, *book.Book) (int, error)
@@ -18,6 +19,7 @@ type api struct {
 	db db.BookDB
 }
 
+// NewAPI creates a new BookAPI backed by given database
 func NewAPI(db db.BookDB) BookAPI {
 	return &api{db: db}
 }

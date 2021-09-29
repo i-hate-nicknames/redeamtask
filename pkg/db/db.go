@@ -7,11 +7,13 @@ import (
 	"github.com/i-hate-nicknames/redeamtask/pkg/book"
 )
 
+// BookRecord represents a single record in the book database
 type BookRecord struct {
 	ID int // todo maybe uint
 	*book.Book
 }
 
+// BookDB is a generic book database interface
 type BookDB interface {
 	Create(context.Context, *BookRecord) (*BookRecord, error)
 	Update(context.Context, *BookRecord) error
@@ -21,4 +23,5 @@ type BookDB interface {
 	Migrate(context.Context) error
 }
 
+// ErrBookNotFound is returned when requested book is not present in the database
 var ErrBookNotFound = errors.New("book not found")

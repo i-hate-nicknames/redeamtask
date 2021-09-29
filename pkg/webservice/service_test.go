@@ -52,14 +52,14 @@ func TestCreateBookCorrectID(t *testing.T) {
 		Rating:      1,
 		Status:      book.StatusCheckedOut,
 	}
-	payload, _ := json.Marshal(b)
+	payload, _ := json.Marshal(b) // nolint: errcheck
 	body := bytes.NewBuffer(payload)
 	r := httptest.NewRequest(http.MethodPost, "/book", body)
 
 	service.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
 
-	var resp IdResponse
+	var resp IDResponse
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, resp.BookID)
@@ -77,14 +77,14 @@ func TestCreateBookCorrectData(t *testing.T) {
 		Rating:      1,
 		Status:      book.StatusCheckedOut,
 	}
-	payload, _ := json.Marshal(b)
+	payload, _ := json.Marshal(b) // nolint: errcheck
 	body := bytes.NewBuffer(payload)
 	r := httptest.NewRequest(http.MethodPost, "/book", body)
 
 	service.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
 
-	var resp IdResponse
+	var resp IDResponse
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 
@@ -174,7 +174,7 @@ func TestUpdateBook(t *testing.T) {
 		Status:      book.StatusCheckedOut,
 	}
 	w := httptest.NewRecorder()
-	payload, _ := json.Marshal(b2)
+	payload, _ := json.Marshal(b2) // nolint: errcheck
 	body := bytes.NewBuffer(payload)
 	path := fmt.Sprintf("/book/%d", ids[0])
 	r := httptest.NewRequest(http.MethodPut, path, body)
@@ -191,7 +191,7 @@ func TestUpdateBook(t *testing.T) {
 	assert.True(t, compareBooks(b2, bookResp))
 }
 
-// workaround for losing precision when marshalling/unmarshalling
+// workaround for losing precision when marshaling/unmarshalling
 // time.Time values.
 // todo: investigate and fix
 func compareBooks(b1, b2 book.Book) bool {
@@ -218,5 +218,5 @@ func compareBooks(b1, b2 book.Book) bool {
 	if err != nil {
 		panic("marshaling error")
 	}
-	return bytes.Compare(t1, t2) == 0
+	return bytes.Equal(t1, t2)
 }

@@ -11,6 +11,7 @@ type memoryDB struct {
 	mu     sync.RWMutex
 }
 
+// MakeMemoryDB creates a new in-memory database
 func MakeMemoryDB() BookDB {
 	items := make(map[int]*BookRecord)
 	db := &memoryDB{items: items, nextID: 1}

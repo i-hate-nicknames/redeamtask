@@ -18,14 +18,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer bookDB.Close(context.Background())
+	defer func() {
+		err := bookDB.Close(context.Background())
+		if err != nil {
+			log.Printf("Error while closing db connection: %s", err)
+		}
+	}()
 	err = bookDB.Migrate(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	bookAPI := api.NewAPI(bookDB)
 	service := webservice.MakeService(bookAPI)
-	http.ListenAndServe(":8080", service)
+	err = http.ListenAndServe(":8080", service)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Read dsn values from env variables or exit program with failure exit code
@@ -34,7 +42,7 @@ func dsnFromEnv() string {
 	user := readEnv("POSTGRES_USER")
 	password := readEnv("POSTGRES_PASSWORD")
 	dbName := readEnv("POSTGRES_DB")
-	dsnTemplate := "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
+	dsnTemplate := "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable"
 	return fmt.Sprintf(dsnTemplate, "db", port, user, password, dbName)
 }
 

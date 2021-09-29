@@ -7,8 +7,6 @@ import (
 	"log"
 	"os"
 
-	_ "embed"
-
 	"github.com/jackc/pgx/v4"
 )
 
@@ -16,6 +14,7 @@ type postgresDB struct {
 	conn *pgx.Conn
 }
 
+// MakePostgresDB creates a new postgres database out of given DSN
 func MakePostgresDB(ctx context.Context, dsn string) (BookDB, error) {
 	conn, err := pgx.Connect(ctx, dsn)
 	if err != nil {

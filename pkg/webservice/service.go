@@ -19,10 +19,12 @@ type webservice struct {
 	api bookapi.BookAPI
 }
 
-type IdResponse struct {
+// IDResponse represents json response that includes bookID
+type IDResponse struct {
 	BookID int `json:"book_id"`
 }
 
+// MakeService creates a new web service around book API
 func MakeService(api bookapi.BookAPI) http.Handler {
 	service := &webservice{api: api}
 	r := chi.NewRouter()
@@ -46,6 +48,7 @@ func defineRoutes(ws *webservice, r *chi.Mux) {
 	})
 }
 
+// CreateBook handler creates a new book
 func (ws *webservice) CreateBook(w http.ResponseWriter, r *http.Request) {
 	b, ok := readBookRequest(w, r)
 	if !ok {
@@ -57,10 +60,11 @@ func (ws *webservice) CreateBook(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	response := IdResponse{BookID: ID}
-	respondJson(w, http.StatusOK, response)
+	response := IDResponse{BookID: ID}
+	respondJSON(w, http.StatusOK, response)
 }
 
+// CreateBook handler updates an existing book
 func (ws *webservice) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	b, ok := readBookRequest(w, r)
 	if !ok {
@@ -84,9 +88,16 @@ func (ws *webservice) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// readBookRequest reads book from the given request. In case of error returns
+// false and sends error to the client
 func readBookRequest(w http.ResponseWriter, r *http.Request) (*book.Book, bool) {
 	data, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.Printf("Failed to close body: %s", err)
+		}
+	}()
 	if err != nil {
 		log.Printf("Failed to read request: %s", err)
 		respondError(w, http.StatusInternalServerError, "backend error")
@@ -106,6 +117,7 @@ func readBookRequest(w http.ResponseWriter, r *http.Request) (*book.Book, bool) 
 	return &b, true
 }
 
+// GetBook handler looks up a book and sends it to the client
 func (ws *webservice) GetBook(w http.ResponseWriter, r *http.Request) {
 	IDStr := chi.URLParam(r, "id")
 	ID, err := strconv.Atoi(IDStr)
@@ -122,9 +134,10 @@ func (ws *webservice) GetBook(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	respondJson(w, http.StatusOK, book)
+	respondJSON(w, http.StatusOK, book)
 }
 
+// DeleteBook handler deletes a book
 func (ws *webservice) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	IDStr := chi.URLParam(r, "id")
 	ID, err := strconv.Atoi(IDStr)
@@ -139,21 +152,25 @@ func (ws *webservice) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ErrorResponse represents error response
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
 func respondError(w http.ResponseWriter, status int, msg string) {
 	response := ErrorResponse{Error: msg}
-	respondJson(w, status, response)
+	respondJSON(w, status, response)
 }
 
-func respondJson(w http.ResponseWriter, status int, val interface{}) {
+func respondJSON(w http.ResponseWriter, status int, val interface{}) {
 	payload, err := json.Marshal(&val)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err != nil {
 		panic("failed to marshal error")
 	}
-	w.Write(payload)
+	_, err = w.Write(payload)
+	if err != nil {
+		log.Printf("Error when writing response: %s", err)
+	}
 }
