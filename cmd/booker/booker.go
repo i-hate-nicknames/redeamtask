@@ -14,17 +14,15 @@ import (
 
 func main() {
 	ctx := context.Background()
-	bookDB, err := db.MakePostgresDB(ctx, dsnFromEnv())
-	if err != nil {
-		log.Fatal(err)
-	}
+	bookDB := initDB(ctx)
+
 	defer func() {
 		err := bookDB.Close(context.Background())
 		if err != nil {
 			log.Printf("Error while closing db connection: %s", err)
 		}
 	}()
-	err = bookDB.Migrate(ctx)
+	err := bookDB.Migrate(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,6 +33,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Choose database implementation based on env variable
+// and initialize it
+func initDB(ctx context.Context) db.BookDB {
+	dbImpl := os.Getenv("DB")
+	var bookDB db.BookDB
+	if dbImpl == "memory" {
+		bookDB = db.MakeMemoryDB()
+	} else {
+		var err error
+		bookDB, err = db.MakePostgresDB(ctx, dsnFromEnv())
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	return bookDB
 }
 
 // Read dsn values from env variables or exit program with failure exit code

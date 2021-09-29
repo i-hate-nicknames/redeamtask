@@ -38,7 +38,7 @@ func (api *api) GetAll(ctx context.Context) ([]book.Book, error) {
 	if err != nil {
 		return nil, err
 	}
-	var books []book.Book
+	books := make([]book.Book, 0)
 	for _, record := range records {
 		books = append(books, recordToDomain(record))
 	}
