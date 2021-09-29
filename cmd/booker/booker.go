@@ -30,7 +30,8 @@ func main() {
 	}
 	bookAPI := api.NewAPI(bookDB)
 	service := webservice.MakeService(bookAPI)
-	err = http.ListenAndServe(":8080", service)
+	port := readEnv("APP_PORT")
+	err = http.ListenAndServe(fmt.Sprintf(":%s", port), service)
 	if err != nil {
 		log.Fatal(err)
 	}
