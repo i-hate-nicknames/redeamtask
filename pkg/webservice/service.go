@@ -40,6 +40,7 @@ func defineRoutes(ws *webservice, r *chi.Mux) {
 	r.Use(middleware.Recoverer)
 	r.Route("/book", func(r chi.Router) {
 		r.Post("/", ws.CreateBook)
+		r.Get("/", ws.GetBooks)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", ws.GetBook)
 			r.Delete("/", ws.DeleteBook)
@@ -135,6 +136,21 @@ func (ws *webservice) GetBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, book)
+}
+
+func (ws *webservice) GetBooks(w http.ResponseWriter, r *http.Request) {
+	IDStr := chi.URLParam(r, "id")
+	ID, err := strconv.Atoi(IDStr)
+	if err != nil || ID <= 0 {
+		respondError(w, http.StatusBadRequest, "book id should be a positive integer")
+		return
+	}
+	books, err := ws.api.GetAll(r.Context())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, books)
 }
 
 // DeleteBook handler deletes a book

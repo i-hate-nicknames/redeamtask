@@ -58,6 +58,16 @@ func (db *memoryDB) Get(_ context.Context, ID int) (*BookRecord, error) {
 	return b, nil
 }
 
+func (db *memoryDB) GetAll(_ context.Context) ([]*BookRecord, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	var records []*BookRecord
+	for _, item := range db.items {
+		records = append(records, item)
+	}
+	return records, nil
+}
+
 func (db *memoryDB) Delete(_ context.Context, ID int) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()

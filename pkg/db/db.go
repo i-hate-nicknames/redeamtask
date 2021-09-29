@@ -18,6 +18,7 @@ type BookDB interface {
 	Create(context.Context, *BookRecord) (*BookRecord, error)
 	Update(context.Context, *BookRecord) error
 	Get(context.Context, int) (*BookRecord, error)
+	GetAll(context.Context) ([]*BookRecord, error)
 	Delete(context.Context, int) error
 	Close(context.Context) error
 	Migrate(context.Context) error

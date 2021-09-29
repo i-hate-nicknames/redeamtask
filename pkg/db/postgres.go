@@ -107,6 +107,10 @@ func (db *postgresDB) Delete(ctx context.Context, ID int) error {
 	return err
 }
 
+func (db *postgresDB) GetAll(_ context.Context) ([]*BookRecord, error) {
+	panic("not implemented")
+}
+
 func (db *postgresDB) Close(ctx context.Context) error {
 	return db.conn.Close(ctx)
 }

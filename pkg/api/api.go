@@ -10,6 +10,7 @@ import (
 // BookAPI implements domain level of book store
 type BookAPI interface {
 	Get(context.Context, int) (*book.Book, error)
+	GetAll(context.Context) ([]*book.Book, error)
 	Create(context.Context, *book.Book) (int, error)
 	Update(context.Context, int, *book.Book) error
 	Delete(context.Context, int) error
@@ -30,6 +31,18 @@ func (api *api) Get(ctx context.Context, ID int) (*book.Book, error) {
 		return nil, err
 	}
 	return recordToDomain(record), nil
+}
+
+func (api *api) GetAll(ctx context.Context) ([]*book.Book, error) {
+	records, err := api.db.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var books []*book.Book
+	for _, record := range records {
+		books = append(books, recordToDomain(record))
+	}
+	return books, nil
 }
 
 func (api *api) Create(ctx context.Context, book *book.Book) (int, error) {
