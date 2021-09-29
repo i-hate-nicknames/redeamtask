@@ -10,7 +10,8 @@ import (
 
 func main() {
 	bookDB := db.MakeMemoryDB()
-	API := api.NewAPI(bookDB)
-	service := webservice.MakeService(API)
+	defer bookDB.Close()
+	bookAPI := api.NewAPI(bookDB)
+	service := webservice.MakeService(bookAPI)
 	http.ListenAndServe(":8080", service)
 }

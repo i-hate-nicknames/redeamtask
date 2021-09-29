@@ -21,6 +21,10 @@ func (db *memoryDB) save(br *BookRecord) error {
 	return nil
 }
 
+func (db *memoryDB) Migrate() error {
+	return nil
+}
+
 func (db *memoryDB) Create(br *BookRecord) (*BookRecord, error) {
 	db.mu.Lock()
 	br.ID = db.nextID
