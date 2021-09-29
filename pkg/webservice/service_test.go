@@ -16,14 +16,22 @@ import (
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
 )
 
-func newService() Service {
+// create new service with given books, return service
+// and slice of book ids, where n-th element corresponds to
+// assigned book ID to the n-th book in the provided books slice
+func newService(books ...*db.BookRecord) (Service, []int) {
 	memdb := db.MakeMemoryDB()
+	var ids []int
+	for _, book := range books {
+		record, _ := memdb.Create(book) // nolint: errcheck
+		ids = append(ids, record.ID)
+	}
 	api := api.NewAPI(memdb)
-	return MakeService(api)
+	return MakeService(api), ids
 }
 
 func TestInvalidPath(t *testing.T) {
-	service := newService()
+	service, _ := newService()
 	w := httptest.NewRecorder()
 	body := bytes.NewBuffer(make([]byte, 0))
 	r := httptest.NewRequest(http.MethodGet, "/INVALID", body)
@@ -33,7 +41,7 @@ func TestInvalidPath(t *testing.T) {
 }
 
 func TestCreateBookCorrectID(t *testing.T) {
-	service := newService()
+	service, _ := newService()
 	w := httptest.NewRecorder()
 	b := book.Book{
 		Title:       "title",
@@ -57,7 +65,7 @@ func TestCreateBookCorrectID(t *testing.T) {
 }
 
 func TestCreateBookCorrectData(t *testing.T) {
-	service := newService()
+	service, _ := newService()
 	w := httptest.NewRecorder()
 	publishDate := time.Now()
 	b := book.Book{
@@ -90,6 +98,96 @@ func TestCreateBookCorrectData(t *testing.T) {
 	err = json.Unmarshal(w.Body.Bytes(), &bookResp)
 	assert.NoError(t, err)
 	assert.True(t, compareBooks(b, bookResp))
+}
+
+func TestGetBook(t *testing.T) {
+	publishDate := time.Now()
+	b := book.Book{
+		Title:       "title",
+		Author:      "author",
+		Publisher:   "publisher",
+		PublishDate: publishDate,
+		Rating:      1,
+		Status:      book.StatusCheckedOut,
+	}
+	br := &db.BookRecord{Book: &b}
+	service, ids := newService(br)
+
+	w := httptest.NewRecorder()
+	body := bytes.NewBuffer(make([]byte, 0))
+	path := fmt.Sprintf("/book/%d", ids[0])
+	r := httptest.NewRequest(http.MethodGet, path, body)
+	service.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var bookResp book.Book
+	err := json.Unmarshal(w.Body.Bytes(), &bookResp)
+	assert.NoError(t, err)
+	assert.True(t, compareBooks(b, bookResp))
+}
+
+func TestDeleteBook(t *testing.T) {
+	publishDate := time.Now()
+	b := book.Book{
+		Title:       "title",
+		Author:      "author",
+		Publisher:   "publisher",
+		PublishDate: publishDate,
+		Rating:      1,
+		Status:      book.StatusCheckedOut,
+	}
+	br := &db.BookRecord{Book: &b}
+	service, ids := newService(br)
+
+	w := httptest.NewRecorder()
+	body := bytes.NewBuffer(make([]byte, 0))
+	path := fmt.Sprintf("/book/%d", ids[0])
+	r := httptest.NewRequest(http.MethodDelete, path, body)
+	service.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	r = httptest.NewRequest(http.MethodGet, path, body)
+	service.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusNotFound, w.Code, w.Body.String())
+}
+
+func TestUpdateBook(t *testing.T) {
+	publishDate := time.Now()
+	b := book.Book{
+		Title:       "title",
+		Author:      "author",
+		Publisher:   "publisher",
+		PublishDate: publishDate,
+		Rating:      1,
+		Status:      book.StatusCheckedOut,
+	}
+	br := &db.BookRecord{Book: &b}
+	service, ids := newService(br)
+
+	b2 := book.Book{
+		Title:       "title2",
+		Author:      "author2",
+		Publisher:   "publisher2",
+		PublishDate: publishDate,
+		Rating:      2,
+		Status:      book.StatusCheckedOut,
+	}
+	w := httptest.NewRecorder()
+	payload, _ := json.Marshal(b2)
+	body := bytes.NewBuffer(payload)
+	path := fmt.Sprintf("/book/%d", ids[0])
+	r := httptest.NewRequest(http.MethodPut, path, body)
+	service.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	r = httptest.NewRequest(http.MethodGet, path, body)
+	service.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var bookResp book.Book
+	err := json.Unmarshal(w.Body.Bytes(), &bookResp)
+	assert.NoError(t, err)
+	assert.True(t, compareBooks(b2, bookResp))
 }
 
 // workaround for losing precision when marshalling/unmarshalling
