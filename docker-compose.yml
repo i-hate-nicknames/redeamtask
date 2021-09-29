@@ -1,0 +1,37 @@
+version: '3.1'
+
+networks:
+  booker:
+
+services:
+  db:
+    image: postgres
+    container_name: booker_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: booker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 8035:5432
+    networks:
+      - booker
+
+  app:
+    build:
+      context: .
+      dockerfile: app.dockerfile
+    container_name: booker_app
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - booker
+    depends_on:
+      db:
+        condition: service_healthy
