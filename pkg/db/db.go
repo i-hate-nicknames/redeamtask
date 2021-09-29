@@ -19,6 +19,7 @@ type BookDB interface {
 	Create(*BookRecord) (*BookRecord, error)
 	Update(*BookRecord) error
 	Get(id int) (*BookRecord, error)
+	Delete(id int) error
 	Close() error
 }
 

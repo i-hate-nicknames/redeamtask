@@ -45,7 +45,7 @@ func TestCreateBookCorrectID(t *testing.T) {
 	}
 	payload, _ := json.Marshal(b)
 	body := bytes.NewBuffer(payload)
-	r := httptest.NewRequest(http.MethodPost, "/books", body)
+	r := httptest.NewRequest(http.MethodPost, "/book", body)
 
 	service.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
@@ -59,17 +59,18 @@ func TestCreateBookCorrectID(t *testing.T) {
 func TestCreateBookCorrectData(t *testing.T) {
 	service := newService()
 	w := httptest.NewRecorder()
+	publishDate := time.Now()
 	b := book.Book{
 		Title:       "title",
 		Author:      "author",
 		Publisher:   "publisher",
-		PublishDate: time.Now(),
+		PublishDate: publishDate,
 		Rating:      1,
 		Status:      book.StatusCheckedOut,
 	}
 	payload, _ := json.Marshal(b)
 	body := bytes.NewBuffer(payload)
-	r := httptest.NewRequest(http.MethodPost, "/books", body)
+	r := httptest.NewRequest(http.MethodPost, "/book", body)
 
 	service.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
@@ -80,7 +81,7 @@ func TestCreateBookCorrectData(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	body = bytes.NewBuffer(make([]byte, 0))
-	path := fmt.Sprintf("/books/%d", resp.BookID)
+	path := fmt.Sprintf("/book/%d", resp.BookID)
 	r = httptest.NewRequest(http.MethodGet, path, body)
 	service.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
@@ -88,5 +89,35 @@ func TestCreateBookCorrectData(t *testing.T) {
 	var bookResp book.Book
 	err = json.Unmarshal(w.Body.Bytes(), &bookResp)
 	assert.NoError(t, err)
-	assert.Equal(t, b, bookResp)
+	assert.True(t, compareBooks(b, bookResp))
+}
+
+// workaround for losing precision when marshalling/unmarshalling
+// time.Time values.
+// todo: investigate and fix
+func compareBooks(b1, b2 book.Book) bool {
+	if b1.Title != b2.Title {
+		return false
+	}
+	if b1.Author != b2.Author {
+		return false
+	}
+	if b1.Rating != b2.Rating {
+		return false
+	}
+	if b1.Status != b2.Status {
+		return false
+	}
+	if b1.Publisher != b2.Publisher {
+		return false
+	}
+	t1, err := b1.PublishDate.MarshalText()
+	if err != nil {
+		panic("marshaling error")
+	}
+	t2, err := b2.PublishDate.MarshalText()
+	if err != nil {
+		panic("marshaling error")
+	}
+	return bytes.Compare(t1, t2) == 0
 }

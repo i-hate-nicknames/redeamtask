@@ -50,6 +50,13 @@ func (db *memoryDB) Get(id int) (*BookRecord, error) {
 	return b, nil
 }
 
+func (db *memoryDB) Delete(ID int) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	delete(db.items, ID)
+	return nil
+}
+
 func (db *memoryDB) Close() error {
 	return nil
 }

@@ -9,6 +9,7 @@ type BookAPI interface {
 	Get(id int) (*book.Book, error)
 	Create(*book.Book) (int, error)
 	Update(int, *book.Book) error
+	Delete(int) error
 }
 
 type api struct {
@@ -39,6 +40,10 @@ func (api *api) Update(bookID int, book *book.Book) error {
 	record := domainToRecord(book)
 	record.ID = bookID
 	return api.db.Update(record)
+}
+
+func (api *api) Delete(bookID int) error {
+	return api.db.Delete(bookID)
 }
 
 func recordToDomain(record *db.BookRecord) *book.Book {

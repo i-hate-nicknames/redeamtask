@@ -40,32 +40,22 @@ func defineRoutes(ws *webservice, r *chi.Mux) {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Logger)
-	r.Route("/books", func(r chi.Router) {
-		r.Get("/{id}", ws.GetBook)
+	r.Route("/book", func(r chi.Router) {
 		r.Post("/", ws.CreateBook)
+		r.Route("/{id}", func(r chi.Router) {
+			r.Get("/", ws.GetBook)
+			r.Delete("/", ws.DeleteBook)
+			r.Put("/", ws.UpdateBook)
+		})
 	})
 }
 
 func (ws *webservice) CreateBook(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		log.Printf("Failed to read request: %s", err)
-		respondError(w, http.StatusInternalServerError, "backend error")
+	b, ok := readBookRequest(w, r)
+	if !ok {
 		return
 	}
-	var b book.Book
-	err = json.Unmarshal(data, &b)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid book data format")
-		return
-	}
-	err = b.Validate()
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	ID, err := ws.api.Create(&b)
+	ID, err := ws.api.Create(b)
 	if err != nil {
 		log.Println(err)
 		respondError(w, http.StatusInternalServerError, err.Error())
@@ -73,6 +63,51 @@ func (ws *webservice) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 	response := IdResponse{BookID: ID}
 	respondJson(w, http.StatusOK, response)
+}
+
+func (ws *webservice) UpdateBook(w http.ResponseWriter, r *http.Request) {
+	b, ok := readBookRequest(w, r)
+	if !ok {
+		return
+	}
+	IDStr := chi.URLParam(r, "id")
+	ID, err := strconv.Atoi(IDStr)
+	if err != nil || ID <= 0 {
+		respondError(w, http.StatusBadRequest, "book id should be a positive integer")
+		return
+	}
+	err = ws.api.Update(ID, b)
+	if err == db.ErrBookNotFound {
+		respondError(w, http.StatusNotFound, "book not found")
+		return
+	}
+	if err != nil {
+		log.Println(err)
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func readBookRequest(w http.ResponseWriter, r *http.Request) (*book.Book, bool) {
+	data, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		log.Printf("Failed to read request: %s", err)
+		respondError(w, http.StatusInternalServerError, "backend error")
+		return nil, false
+	}
+	var b book.Book
+	err = json.Unmarshal(data, &b)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid book data format")
+		return nil, false
+	}
+	err = b.Validate()
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return nil, false
+	}
+	return &b, true
 }
 
 func (ws *webservice) GetBook(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +127,20 @@ func (ws *webservice) GetBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJson(w, http.StatusOK, book)
+}
+
+func (ws *webservice) DeleteBook(w http.ResponseWriter, r *http.Request) {
+	IDStr := chi.URLParam(r, "id")
+	ID, err := strconv.Atoi(IDStr)
+	if err != nil || ID <= 0 {
+		respondError(w, http.StatusBadRequest, "book id should be a positive integer")
+		return
+	}
+	err = ws.api.Delete(ID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 type ErrorResponse struct {
