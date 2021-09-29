@@ -14,10 +14,6 @@ import (
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
 )
 
-type Service interface {
-	http.Handler
-}
-
 type webservice struct {
 	http.Handler
 	api bookapi.BookAPI
@@ -27,7 +23,7 @@ type IdResponse struct {
 	BookID int `json:"book_id"`
 }
 
-func MakeService(api bookapi.BookAPI) Service {
+func MakeService(api bookapi.BookAPI) http.Handler {
 	service := &webservice{api: api}
 	r := chi.NewRouter()
 	defineRoutes(service, r)

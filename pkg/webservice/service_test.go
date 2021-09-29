@@ -20,7 +20,7 @@ import (
 // create new service with given books, return service
 // and slice of book ids, where n-th element corresponds to
 // assigned book ID to the n-th book in the provided books slice
-func newService(books ...*db.BookRecord) (Service, []int) {
+func newService(books ...*db.BookRecord) (http.Handler, []int) {
 	memdb := db.MakeMemoryDB()
 	var ids []int
 	for _, book := range books {
