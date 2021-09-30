@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Book represents book entity
 type Book struct {
 	Title       string    `json:"title"`
 	Author      string    `json:"author"`
@@ -15,13 +16,17 @@ type Book struct {
 	Status      Status    `json:"status"`
 }
 
+// Status of a book
 type Status string
 
 const (
-	StatusCheckedIn  Status = "checked_in"
-	StatusCheckedOut        = "checked_out"
+	// StatusCheckedIn represents checked in status
+	StatusCheckedIn Status = "checked_in"
+	// StatusCheckedOut represents checked out status
+	StatusCheckedOut = "checked_out"
 )
 
+// ValidationErrors is a collection of book validation errors
 type ValidationErrors struct {
 	errors []error
 }
@@ -36,6 +41,9 @@ func (ve *ValidationErrors) Error() string {
 	return msg + "[" + strings.Join(errs, ", ") + "]"
 }
 
+// Validate a book instance for invalid data:
+// - invalid rating not in range [1, 3]
+// - invalid status
 func (b *Book) Validate() error {
 	ve := &ValidationErrors{}
 	if b.Rating > 3 || b.Rating < 1 {
