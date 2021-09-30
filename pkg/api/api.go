@@ -5,6 +5,7 @@ import (
 
 	"github.com/i-hate-nicknames/redeamtask/pkg/book"
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
+	"github.com/rs/zerolog"
 )
 
 // BookAPI implements domain level of book store
@@ -17,12 +18,13 @@ type BookAPI interface {
 }
 
 type api struct {
-	db db.BookDB
+	db     db.BookDB
+	logger zerolog.Logger
 }
 
 // NewAPI creates a new BookAPI backed by given database
-func NewAPI(db db.BookDB) BookAPI {
-	return &api{db: db}
+func NewAPI(db db.BookDB, logger zerolog.Logger) BookAPI {
+	return &api{db: db, logger: logger}
 }
 
 func (api *api) Get(ctx context.Context, ID int) (book.Book, error) {

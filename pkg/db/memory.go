@@ -3,18 +3,21 @@ package db
 import (
 	"context"
 	"sync"
+
+	"github.com/rs/zerolog"
 )
 
 type memoryDB struct {
 	nextID int
 	items  map[int]BookRecord
 	mu     sync.RWMutex
+	logger zerolog.Logger
 }
 
 // MakeMemoryDB creates a new in-memory database
-func MakeMemoryDB() BookDB {
+func MakeMemoryDB(logger zerolog.Logger) BookDB {
 	items := make(map[int]BookRecord)
-	db := &memoryDB{items: items, nextID: 1}
+	db := &memoryDB{items: items, nextID: 1, logger: logger}
 	return db
 }
 
@@ -30,6 +33,7 @@ func (db *memoryDB) Migrate(_ context.Context) error {
 }
 
 func (db *memoryDB) Create(_ context.Context, br BookRecord) (BookRecord, error) {
+	db.logger.Debug().Str("book_title", br.Title).Msg("Create book")
 	db.mu.Lock()
 	br.ID = db.nextID
 	db.nextID++
@@ -42,6 +46,7 @@ func (db *memoryDB) Create(_ context.Context, br BookRecord) (BookRecord, error)
 }
 
 func (db *memoryDB) Update(ctx context.Context, br BookRecord) error {
+	db.logger.Debug().Int("book_id", br.ID).Msg("Update book")
 	if _, err := db.Get(ctx, br.ID); err != nil {
 		return err
 	}
@@ -49,6 +54,7 @@ func (db *memoryDB) Update(ctx context.Context, br BookRecord) error {
 }
 
 func (db *memoryDB) Get(_ context.Context, ID int) (BookRecord, error) {
+	db.logger.Debug().Int("book_id", ID).Msg("Get book")
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	b, ok := db.items[ID]
@@ -59,6 +65,7 @@ func (db *memoryDB) Get(_ context.Context, ID int) (BookRecord, error) {
 }
 
 func (db *memoryDB) GetAll(_ context.Context) ([]BookRecord, error) {
+	db.logger.Debug().Msg("Get all books")
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	var records []BookRecord
@@ -69,6 +76,7 @@ func (db *memoryDB) GetAll(_ context.Context) ([]BookRecord, error) {
 }
 
 func (db *memoryDB) Delete(_ context.Context, ID int) error {
+	db.logger.Debug().Int("book_id", ID).Msg("Delete book")
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	delete(db.items, ID)

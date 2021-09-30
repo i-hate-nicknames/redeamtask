@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/i-hate-nicknames/redeamtask/pkg/api"
@@ -21,14 +22,17 @@ import (
 // and slice of book ids, where n-th element corresponds to
 // assigned book ID to the n-th book in the provided books slice
 func newService(books ...db.BookRecord) (http.Handler, []int) {
-	memdb := db.MakeMemoryDB()
+	dbLogger := log.With().Str("component", "test_db").Logger()
+	serviceLogger := log.With().Str("component", "test_webservice").Logger()
+	APILogger := log.With().Str("component", "test_api").Logger()
+	memdb := db.MakeMemoryDB(dbLogger)
 	var ids []int
 	for _, book := range books {
 		record, _ := memdb.Create(context.Background(), book) // nolint: errcheck
 		ids = append(ids, record.ID)
 	}
-	api := api.NewAPI(memdb)
-	return MakeService(api), ids
+	api := api.NewAPI(memdb, APILogger)
+	return MakeService(api, serviceLogger), ids
 }
 
 func TestInvalidPath(t *testing.T) {

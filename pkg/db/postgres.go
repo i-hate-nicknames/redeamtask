@@ -4,23 +4,24 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/jackc/pgx/v4"
+	"github.com/rs/zerolog"
 )
 
 type postgresDB struct {
-	conn *pgx.Conn
+	conn   *pgx.Conn
+	logger zerolog.Logger
 }
 
 // MakePostgresDB creates a new postgres database out of given DSN
-func MakePostgresDB(ctx context.Context, dsn string) (BookDB, error) {
+func MakePostgresDB(ctx context.Context, dsn string, logger zerolog.Logger) (BookDB, error) {
 	conn, err := pgx.Connect(ctx, dsn)
 	if err != nil {
 		return nil, err
 	}
-	return &postgresDB{conn: conn}, nil
+	return &postgresDB{conn: conn, logger: logger}, nil
 }
 
 func (db *postgresDB) Migrate(ctx context.Context) error {
@@ -38,6 +39,7 @@ func (db *postgresDB) Migrate(ctx context.Context) error {
 }
 
 func (db *postgresDB) Create(ctx context.Context, br BookRecord) (BookRecord, error) {
+	db.logger.Debug().Str("book_title", br.Title).Msg("Create book")
 	query := `
 		INSERT INTO books (title, author, publisher, publish_date, rating, _status)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -53,6 +55,7 @@ func (db *postgresDB) Create(ctx context.Context, br BookRecord) (BookRecord, er
 }
 
 func (db *postgresDB) Update(ctx context.Context, br BookRecord) error {
+	db.logger.Debug().Int("book_id", br.ID).Msg("Update book")
 	query := `
 		UPDATE books
 		SET
@@ -70,12 +73,13 @@ func (db *postgresDB) Update(ctx context.Context, br BookRecord) error {
 		return ErrBookNotFound
 	}
 	if affected > 1 {
-		log.Println("Single book update affected more than a single book")
+		db.logger.Panic().Msg("Single book update affected more than a single book")
 	}
 	return err
 }
 
 func (db *postgresDB) Get(ctx context.Context, ID int) (BookRecord, error) {
+	db.logger.Debug().Int("book_id", ID).Msg("Get book")
 	query := `
 		SELECT id, title, author, publisher, publish_date, rating, _status
 		FROM books
@@ -94,6 +98,7 @@ func (db *postgresDB) Get(ctx context.Context, ID int) (BookRecord, error) {
 }
 
 func (db *postgresDB) Delete(ctx context.Context, ID int) error {
+	db.logger.Debug().Int("book_id", ID).Msg("Delete book")
 	query := `
 		UPDATE books
 		SET deleted_at = now()
@@ -102,12 +107,13 @@ func (db *postgresDB) Delete(ctx context.Context, ID int) error {
 	cmd, err := db.conn.Exec(ctx, query, ID)
 	affected := cmd.RowsAffected()
 	if affected > 1 {
-		log.Println("Single book delete affected more than a single book")
+		db.logger.Panic().Msg("Single delete update affected more than a single book")
 	}
 	return err
 }
 
 func (db *postgresDB) GetAll(ctx context.Context) ([]BookRecord, error) {
+	db.logger.Debug().Msg("Get all books")
 	query := `
 		SELECT id, title, author, publisher, publish_date, rating, _status
 		FROM books
@@ -130,5 +136,6 @@ func (db *postgresDB) GetAll(ctx context.Context) ([]BookRecord, error) {
 }
 
 func (db *postgresDB) Close(ctx context.Context) error {
+	db.logger.Info().Msg("Closing db connection")
 	return db.conn.Close(ctx)
 }

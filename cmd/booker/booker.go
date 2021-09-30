@@ -22,6 +22,9 @@ func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	dbLogger := log.With().Str("component", "db").Logger()
+	serviceLogger := log.With().Str("component", "webservice").Logger()
+	APILogger := log.With().Str("component", "api").Logger()
 	levelVal := os.Getenv("LOG_LEVEL")
 	level, err := zerolog.ParseLevel(levelVal)
 	if levelVal != "" && err == nil {
@@ -32,7 +35,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	bookDB := initDB(ctx)
+	bookDB := initDB(ctx, dbLogger)
 	defer func() {
 		err := bookDB.Close(context.Background())
 		if err != nil {
@@ -44,8 +47,8 @@ func main() {
 		log.Fatal().Err(err).Send()
 		return
 	}
-	bookAPI := api.NewAPI(bookDB)
-	service := webservice.MakeService(bookAPI)
+	bookAPI := api.NewAPI(bookDB, APILogger)
+	service := webservice.MakeService(bookAPI, serviceLogger)
 	port := readEnv("APP_PORT")
 	err = http.ListenAndServe(fmt.Sprintf(":%s", port), service)
 	if err != nil {
@@ -55,14 +58,14 @@ func main() {
 
 // Choose database implementation based on env variable
 // and initialize it
-func initDB(ctx context.Context) db.BookDB {
+func initDB(ctx context.Context, logger zerolog.Logger) db.BookDB {
 	dbImpl := os.Getenv("DB")
 	var bookDB db.BookDB
 	if dbImpl == "memory" {
-		bookDB = db.MakeMemoryDB()
+		bookDB = db.MakeMemoryDB(logger)
 	} else {
 		var err error
-		bookDB, err = db.MakePostgresDB(ctx, dsnFromEnv())
+		bookDB, err = db.MakePostgresDB(ctx, dsnFromEnv(), logger)
 		if err != nil {
 			log.Fatal().Stack().Err(err).Send()
 		}

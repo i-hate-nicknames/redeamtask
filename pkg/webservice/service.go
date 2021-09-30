@@ -12,11 +12,13 @@ import (
 	bookapi "github.com/i-hate-nicknames/redeamtask/pkg/api"
 	"github.com/i-hate-nicknames/redeamtask/pkg/book"
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
+	"github.com/rs/zerolog"
 )
 
 type webservice struct {
 	http.Handler
-	api bookapi.BookAPI
+	api    bookapi.BookAPI
+	logger zerolog.Logger
 }
 
 // IDResponse represents json response that includes bookID
@@ -25,8 +27,8 @@ type IDResponse struct {
 }
 
 // MakeService creates a new web service around book API
-func MakeService(api bookapi.BookAPI) http.Handler {
-	service := &webservice{api: api}
+func MakeService(api bookapi.BookAPI, logger zerolog.Logger) http.Handler {
+	service := &webservice{api: api, logger: logger}
 	r := chi.NewRouter()
 	defineRoutes(service, r)
 	service.Handler = r
