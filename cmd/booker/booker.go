@@ -19,20 +19,10 @@ import (
 const postgresPort = 5432
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	setupLogging()
 	dbLogger := log.With().Str("component", "db").Logger()
 	serviceLogger := log.With().Str("component", "webservice").Logger()
 	APILogger := log.With().Str("component", "api").Logger()
-	levelVal := os.Getenv("LOG_LEVEL")
-	level, err := zerolog.ParseLevel(levelVal)
-	if levelVal != "" && err == nil {
-		log.Info().Msgf("Log global level is set to: %s", level)
-		zerolog.SetGlobalLevel(level)
-	} else {
-		log.Info().Msgf("Log level is not set, falling back to default: %s", zerolog.GlobalLevel())
-	}
 
 	ctx := context.Background()
 	bookDB := initDB(ctx, dbLogger)
@@ -42,7 +32,7 @@ func main() {
 			log.Printf("Error while closing db connection: %s", err)
 		}
 	}()
-	err = bookDB.Migrate(ctx)
+	err := bookDB.Migrate(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 		return
@@ -63,14 +53,33 @@ func initDB(ctx context.Context, logger zerolog.Logger) db.BookDB {
 	var bookDB db.BookDB
 	if dbImpl == "memory" {
 		bookDB = db.MakeMemoryDB(logger)
+		logger.Info().Msg("Running in-memory database")
 	} else {
 		var err error
 		bookDB, err = db.MakePostgresDB(ctx, dsnFromEnv(), logger)
 		if err != nil {
 			log.Fatal().Stack().Err(err).Send()
 		}
+		logger.Info().Msg("Connected to postgres database")
 	}
 	return bookDB
+}
+
+func setupLogging() {
+	pretty := os.Getenv("LOG_PRETTY")
+	if pretty == "1" {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	}
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	levelVal := os.Getenv("LOG_LEVEL")
+	level, err := zerolog.ParseLevel(levelVal)
+	if levelVal != "" && err == nil {
+		log.Info().Msgf("Log global level is set to: %s", level)
+		zerolog.SetGlobalLevel(level)
+	} else {
+		log.Info().Msgf("Log level is not set, falling back to default: %s", zerolog.GlobalLevel())
+	}
 }
 
 // Read dsn values from env variables or exit program with failure exit code

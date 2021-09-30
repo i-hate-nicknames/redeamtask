@@ -29,6 +29,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       APP_PORT: ${APP_PORT}
       LOG_LEVEL: ${LOG_LEVEL}
+      LOG_PRETTY=: ${LOG_PRETTY}
     ports:
       - ${APP_PORT}:${APP_PORT}
     networks:
