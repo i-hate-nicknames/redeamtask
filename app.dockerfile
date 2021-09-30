@@ -13,6 +13,5 @@ WORKDIR /app
 COPY --from=builder /go/src/booker /app/booker
 COPY --from=builder /go/src/sql /app/sql
 ARG PORT=8080
-ENV PORT=${PORT}
 EXPOSE ${PORT}
 CMD ["/app/booker"]
