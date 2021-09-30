@@ -6,17 +6,22 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
+
 	"github.com/i-hate-nicknames/redeamtask/pkg/api"
 	"github.com/i-hate-nicknames/redeamtask/pkg/db"
 	"github.com/i-hate-nicknames/redeamtask/pkg/webservice"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/pkgerrors"
 )
 
 const postgresPort = 5432
 
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	levelVal := os.Getenv("LOG_LEVEL")
 	level, err := zerolog.ParseLevel(levelVal)
 	if levelVal != "" && err == nil {
@@ -59,7 +64,7 @@ func initDB(ctx context.Context) db.BookDB {
 		var err error
 		bookDB, err = db.MakePostgresDB(ctx, dsnFromEnv())
 		if err != nil {
-			log.Fatal().Stack().Err(err)
+			log.Fatal().Stack().Err(err).Send()
 		}
 	}
 	return bookDB
@@ -78,7 +83,8 @@ func dsnFromEnv() string {
 func readEnv(varName string) string {
 	val := os.Getenv(varName)
 	if val == "" {
-		log.Fatal().Err(fmt.Errorf("Missing %s env variable", varName)).Send()
+		msg := fmt.Sprintf("Missing %s env variable", varName)
+		log.Fatal().Stack().Err(errors.New(msg)).Send()
 	}
 	return val
 }
