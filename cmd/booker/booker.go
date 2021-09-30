@@ -16,10 +16,23 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 )
 
+var (
+	// Version of the program (assigned at build time)
+	Version string
+	// Date when the program was built (assigned at build time)
+	Date string
+	// Commit from which the program was built (assigned at build time)
+	Commit string
+)
+
 const postgresPort = 5432
 
 func main() {
 	setupLogging()
+	log.Info().Str("version", Version).
+		Str("release_date", Date).
+		Str("commit", Commit).
+		Msg("Running booker")
 	dbLogger := log.With().Str("component", "db").Logger()
 	serviceLogger := log.With().Str("component", "webservice").Logger()
 	APILogger := log.With().Str("component", "api").Logger()
