@@ -6,7 +6,7 @@ COPY go.sum .
 # on every rebuild
 RUN go mod download
 COPY . .
-RUN go build -v -o booker ./cmd/booker/booker.go
+RUN make build
 
 FROM debian:stable-slim
 WORKDIR /app

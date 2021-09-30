@@ -2,19 +2,19 @@
 
 A small CRUD application that manages books
 
+## Testing
+Run `make test`
+
 ## Running
 
+### Docker-compose
 1. Copy .env.example as .env, optionally change values to your taste
-2. Run `docker-compose up -d`
-3. Hit `localhost:8085/book` endpoint with POST, GET, PUT and DELETE methods
+2. Run `make run-docker`
+3. Hit `localhost:8080/book` endpoint with POST, GET, PUT and DELETE methods. Change 8080 to the value of APP_PORT in .env file, if you changed it.
 
-You can also run it locally with in-memory database. For this, set APP_PORT
-and DB environment variables and run as follows:
-
-```
-go build cmd/booker/booker.go
-DB=memory APP_PORT=8085 ./booker
-```
+### Locally
+1. Run `make build`
+2. Run `make run-local`
 
 
 Example of book payload for POST and PUT methods:

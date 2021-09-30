@@ -22,7 +22,7 @@ build:
 	go build ${BUILD_OPTS} -o booker ./cmd/booker/booker.go
 
 run-local:
-	DB=memory APP_PORT=8085 LOG_LEVEL=debug LOG_PRETTY=1 ./booker
+	DB=memory APP_PORT=8080 LOG_LEVEL=debug LOG_PRETTY=1 ./booker
 
 run-docker:
 	docker-compose down && docker-compose up -d --build
