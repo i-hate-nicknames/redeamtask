@@ -12,10 +12,11 @@ import (
 	"github.com/i-hate-nicknames/redeamtask/pkg/webservice"
 )
 
+const postgresPort = 5432
+
 func main() {
 	ctx := context.Background()
 	bookDB := initDB(ctx)
-	fmt.Println("hui sasi")
 	defer func() {
 		err := bookDB.Close(context.Background())
 		if err != nil {
@@ -54,12 +55,11 @@ func initDB(ctx context.Context) db.BookDB {
 
 // Read dsn values from env variables or exit program with failure exit code
 func dsnFromEnv() string {
-	port := readEnv("POSTGRES_PORT")
 	user := readEnv("POSTGRES_USER")
 	password := readEnv("POSTGRES_PASSWORD")
 	dbName := readEnv("POSTGRES_DB")
-	dsnTemplate := "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable"
-	return fmt.Sprintf(dsnTemplate, "db", port, user, password, dbName)
+	dsnTemplate := "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
+	return fmt.Sprintf(dsnTemplate, "db", postgresPort, user, password, dbName)
 }
 
 // Read an env variables or exit program with failure exit code
